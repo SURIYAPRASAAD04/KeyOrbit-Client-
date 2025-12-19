@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Icon from '../../../components/AppIcon';
 import { authAPI } from '../../../services/api';
 
-const EmailVerification = ({ email, userId, onComplete, onBack }) => {
+const EmailVerification = ({ email, onComplete, onBack, onResendEmail }) => {
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
@@ -12,6 +12,13 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
   const [canResend, setCanResend] = useState(false);
   const [error, setError] = useState('');
   const [isVerified, setIsVerified] = useState(false);
+  const [successMessage, setSuccessMessage] = useState(''); // New state for success messages
+  const errorRef = useRef(error); // Ref to track error state
+
+  // Update ref when error changes
+  useEffect(() => {
+    errorRef.current = error;
+  }, [error]);
 
   useEffect(() => {
     let timer;
@@ -27,6 +34,7 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
     const code = e?.target?.value?.replace(/\D/g, '')?.slice(0, 6);
     setVerificationCode(code);
     setError('');
+    setSuccessMessage('');
   };
 
   const handleVerify = async (e) => {
@@ -40,9 +48,16 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
     setIsLoading(true);
     
     try {
-      const response = await authAPI.verifyEmail(userId, verificationCode);
+      const response = await authAPI.verifyEmail(verificationCode);
       
-      if (response.status === 200) {
+      if (response.status === 200 && response.data.user && response.data.token) {
+        // Account created successfully after verification
+        localStorage.setItem('keyorbit_user', JSON.stringify(response.data.user));
+        localStorage.setItem('keyorbit_token', response.data.token);
+        
+        // Clear pending registration data
+        localStorage.removeItem('pendingRegistrationId');
+        
         setIsVerified(true);
         
         // Redirect after success
@@ -63,21 +78,104 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
 
   const handleResend = async () => {
     setResendLoading(true);
+    setError('');
+    setSuccessMessage('');
     
     try {
-      await authAPI.resendVerification(email);
-      setTimeLeft(60);
-      setCanResend(false);
-      setVerificationCode('');
-    } catch (error) {
-      if (error.response?.data?.error) {
-        setError(error.response.data.error);
-      } else {
-        setError('Failed to resend verification code.');
+      // Get pending registration ID from localStorage
+      const pendingId = localStorage.getItem('pendingRegistrationId');
+      
+      console.log('Attempting to resend verification for pendingId:', pendingId);
+      
+      if (!pendingId) {
+        // Try using email as fallback
+        if (email) {
+          console.log('No pendingId, using email instead:', email);
+          const response = await authAPI.resendVerification({ email });
+          
+          if (response.data.success) {
+            // Update pendingId if returned
+            if (response.data.pendingId) {
+              localStorage.setItem('pendingRegistrationId', response.data.pendingId);
+            }
+            
+            handleResendSuccess();
+            return;
+          }
+        }
+        throw new Error('Registration session expired. Please start over.');
       }
+      
+      // Resend verification using pending ID
+      console.log('Calling resendVerification API with pendingId:', pendingId);
+      const response = await authAPI.resendVerification({ pendingId });
+      
+      console.log('Resend response:', response.data);
+      
+      if (response.data.success) {
+        handleResendSuccess();
+      } else {
+        // Check if the backend returned success: false but still sent email
+        if (response.data.message && response.data.message.includes('sent')) {
+          // Still show success even if backend returned success: false
+          handleResendSuccess();
+          console.warn('Backend returned success: false but email was sent:', response.data.message);
+        } else {
+          throw new Error(response.data.error || response.data.message || 'Failed to resend verification');
+        }
+      }
+      
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      
+      let errorMessage = 'Failed to resend verification code.';
+      
+      // Check if it's actually a success (some backends return 200 with error in body)
+      if (error.response?.status === 200 && error.response?.data?.message) {
+        // The email was sent successfully, but backend structure is different
+        if (error.response.data.message.includes('sent') || error.response.data.message.includes('success')) {
+          handleResendSuccess();
+          return;
+        }
+      }
+      
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Check if it's a network error
+      if (!error.response && error.message.includes('Network')) {
+        errorMessage = 'Network error. Please check your connection.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setResendLoading(false);
     }
+  };
+
+  // Helper function for successful resend
+  const handleResendSuccess = () => {
+    // Reset timer
+    setTimeLeft(60);
+    setCanResend(false);
+    setVerificationCode('');
+    
+    // Show success message
+    const successMsg = 'Verification code resent successfully!';
+    setSuccessMessage(successMsg);
+    setError(''); // Clear any error
+    
+    console.log('Resend successful, showing success message');
+    
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      setSuccessMessage('');
+    }, 3000);
   };
 
   if (isVerified) {
@@ -91,10 +189,13 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
           <p className="text-muted-foreground">
             Your account has been successfully created and verified.
           </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Welcome to KeyOrbit KMS Enterprise!
+          </p>
         </div>
         <div className="flex items-center justify-center space-x-2 text-sm text-success">
           <Icon name="Check" size={16} />
-          <span>Redirecting to login...</span>
+          <span>Redirecting to dashboard...</span>
         </div>
       </div>
     );
@@ -111,9 +212,23 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
           We've sent a verification code to
         </p>
         <p className="font-medium text-foreground">{email}</p>
+        <p className="text-sm text-muted-foreground">
+          Check your inbox (and spam folder) for the 6-digit code
+        </p>
       </div>
 
       <form onSubmit={handleVerify} className="space-y-6">
+        {/* Success Message */}
+        {successMessage && (
+          <div className="p-4 bg-success/10 border border-success/20 rounded-lg">
+            <div className="flex items-center space-x-2">
+              <Icon name="CheckCircle" size={16} className="text-success" />
+              <p className="text-sm text-success">{successMessage}</p>
+            </div>
+          </div>
+        )}
+        
+        {/* Error Message */}
         {error && (
           <div className="p-4 bg-error/10 border border-error/20 rounded-lg">
             <div className="flex items-center space-x-2">
@@ -136,6 +251,7 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
             className="text-center text-lg font-mono tracking-widest"
             maxLength={6}
             required
+            autoFocus
           />
           <p className="text-xs text-muted-foreground text-center">
             Enter the 6-digit code from your email
@@ -154,7 +270,7 @@ const EmailVerification = ({ email, userId, onComplete, onBack }) => {
             iconPosition="right"
             className="btn-glow"
           >
-            {isLoading ? 'Verifying...' : 'Verify Email'}
+            {isLoading ? 'Verifying...' : 'Verify & Create Account'}
           </Button>
 
           {/* Resend Code */}

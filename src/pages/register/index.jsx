@@ -33,38 +33,51 @@ const Register = () => {
   };
 
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 1:
-        return (
-          <RegisterForm
-            onComplete={(data) => handleStepComplete(data, 2)}
-            onBack={handleBackToLogin}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-          />
-        );
-      case 2:
-        return (
-          <OrganizationDetails
-            onComplete={(data) => handleStepComplete({ ...registrationData, ...data }, 3)}
-            onBack={() => setCurrentStep(1)}
-            isLoading={isLoading}
-            setIsLoading={setIsLoading}
-          />
-        );
-      case 3:
-        return (
-          <EmailVerification
-            email={registrationData?.email}
-            userId={registrationData?.userId}
-            onComplete={() => navigate('/login')}
-            onBack={() => setCurrentStep(2)}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  switch (currentStep) {
+    case 1:
+      return (
+        <RegisterForm
+          onComplete={(data) => {
+            setRegistrationData(prev => ({ ...prev, ...data }));
+            setCurrentStep(2);
+          }}
+          onBack={handleBackToLogin}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+        />
+      );
+    case 2:
+      return (
+        <OrganizationDetails
+          onComplete={(data) => {
+            setRegistrationData(prev => ({ ...prev, ...data }));
+            setCurrentStep(3);
+          }}
+          onBack={() => setCurrentStep(1)}
+          registrationData={registrationData}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+        />
+      );
+    case 3:
+      return (
+        <EmailVerification
+          email={registrationData?.email}
+          onComplete={() => navigate('/dashboard')}
+          onBack={() => setCurrentStep(2)}
+          onResendEmail={async () => {
+            // Resend verification with all data
+            const response = await authAPI.register(registrationData);
+            if (response.data.pendingId) {
+              localStorage.setItem('pendingRegistrationId', response.data.pendingId);
+            }
+          }}
+        />
+      );
+    default:
+      return null;
+  }
+};
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">

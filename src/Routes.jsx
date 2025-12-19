@@ -19,6 +19,7 @@ import PolicyManagement from './pages/policy-management';
 import AuthSuccess from './pages/auth/AuthSuccess';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import GoogleCallback from './pages/auth/GoogleCallback';
 
 const Routes = () => {
   return (
@@ -145,7 +146,7 @@ const Routes = () => {
               </ProtectedRoute>
             } 
           />
-          
+          <Route path="/auth/google-callback" element={<GoogleCallback />} />
           {/* Catch all route */}
           <Route path="*" element={<NotFound />} />
         </RouterRoutes>

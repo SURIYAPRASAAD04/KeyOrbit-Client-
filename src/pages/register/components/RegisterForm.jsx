@@ -98,40 +98,34 @@ const RegisterForm = ({ onComplete, onBack, isLoading, setIsLoading }) => {
   };
 
   const handleSubmit = async (e) => {
-    e?.preventDefault();
+  e?.preventDefault();
+  
+  if (!validateForm()) return;
+  
+  setIsLoading(true);
+  
+  try {
+    // Store user data for next step (organization details)
+    const userData = {
+      firstName: formData.firstName,
+      lastName: formData.lastName,
+      email: formData.email,
+      phone: formData.phone,
+      password: formData.password
+    };
     
-    if (!validateForm()) return;
-    
-    setIsLoading(true);
-    
-    try {
-      const response = await authAPI.register({
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        phone: formData.phone,
-        password: formData.password
-      });
-      
-      if (response.data.userId) {
-        onComplete({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          userId: response.data.userId
-        });
-      }
-    } catch (error) {
-      if (error.response?.data?.error) {
-        setErrors({ general: error.response.data.error });
-      } else {
-        setErrors({ general: 'Registration failed. Please try again.' });
-      }
-    } finally {
-      setIsLoading(false);
+    // Just pass data to next step - don't call API yet
+    onComplete(userData);
+  } catch (error) {
+    if (error.response?.data?.error) {
+      setErrors({ general: error.response.data.error });
+    } else {
+      setErrors({ general: 'Registration failed. Please try again.' });
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div className="space-y-6">

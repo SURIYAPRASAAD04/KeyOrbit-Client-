@@ -2,18 +2,16 @@ import React, { useState } from 'react';
 import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
-import { Checkbox } from '../../../components/ui/Checkbox';
 import Icon from '../../../components/AppIcon';
+import { authAPI } from '../../../services/api';
 
-const OrganizationDetails = ({ onComplete, onBack, isLoading, setIsLoading }) => {
+const OrganizationDetails = ({ onComplete, onBack, registrationData, isLoading, setIsLoading }) => {
   const [formData, setFormData] = useState({
     organizationName: '',
     domain: '',
     industry: '',
     companySize: '',
-    role: '',
-    enableSSO: false,
-    domainVerification: false
+    role: ''
   });
   const [errors, setErrors] = useState({});
 
@@ -49,31 +47,27 @@ const OrganizationDetails = ({ onComplete, onBack, isLoading, setIsLoading }) =>
   ];
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? e.target.checked : value
     }));
     
-    // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
 
-    // Auto-validate domain
     if (name === 'domain') {
       validateDomain(value);
     }
   };
 
-  // Handle select change specifically
   const handleSelectChange = (name, selectedValue) => {
     setFormData(prev => ({
       ...prev,
       [name]: selectedValue
     }));
     
-    // Clear error when user selects an option
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -123,11 +117,34 @@ const OrganizationDetails = ({ onComplete, onBack, isLoading, setIsLoading }) =>
     
     setIsLoading(true);
     
-    // Simulate API call for domain verification
-    setTimeout(() => {
+    try {
+      // Combine registration data with organization data
+      const completeData = {
+        ...registrationData,
+        organizationData: formData
+      };
+      
+      // Send everything to backend in one go
+      const response = await authAPI.register(completeData);
+      
+      if (response.data.pendingId) {
+        // Store pending ID for verification step
+        localStorage.setItem('pendingRegistrationId', response.data.pendingId);
+        onComplete({
+          ...registrationData,
+          ...formData,
+          pendingId: response.data.pendingId
+        });
+      }
+    } catch (error) {
+      if (error.response?.data?.error) {
+        setErrors({ general: error.response.data.error });
+      } else {
+        setErrors({ general: error.message || 'Registration failed. Please try again.' });
+      }
+    } finally {
       setIsLoading(false);
-      onComplete(formData);
-    }, 2000);
+    }
   };
 
   return (
@@ -138,6 +155,15 @@ const OrganizationDetails = ({ onComplete, onBack, isLoading, setIsLoading }) =>
           Help us configure your enterprise environment
         </p>
       </div>
+
+      {errors.general && (
+        <div className="p-4 bg-error/10 border border-error/20 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <Icon name="AlertCircle" size={16} className="text-error" />
+            <p className="text-sm text-error">{errors.general}</p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Organization Info */}
@@ -230,7 +256,7 @@ const OrganizationDetails = ({ onComplete, onBack, isLoading, setIsLoading }) =>
             iconPosition="right"
             className="btn-glow"
           >
-            {isLoading ? 'Configuring Organization...' : 'Continue'}
+            {isLoading ? 'Sending Verification Email...' : 'Continue to Verification'}
           </Button>
 
           <button
