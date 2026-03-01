@@ -10,7 +10,7 @@ const BulkActionsBar = ({ selectedCount, onBulkAction, selectedUserIds }) => {
   };
 
   return (
-    <div className="glass-card rounded-lg p-4">
+    <div className="glass-card rounded-lg p-4 mb-4 relative z-50"> {/* Added z-50 here too */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
@@ -33,9 +33,9 @@ const BulkActionsBar = ({ selectedCount, onBulkAction, selectedUserIds }) => {
             />
           </button>
 
-          {/* Dropdown Menu */}
+          {/* Dropdown Menu with extremely high z-index */}
           {showActions && (
-            <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-orbital-lg z-50">
+            <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-lg shadow-orbital-lg z-[9999]"> {/* Increased z-index */}
               <div className="py-2">
                 <button
                   onClick={() => handleBulkAction('activate')}
@@ -58,21 +58,7 @@ const BulkActionsBar = ({ selectedCount, onBulkAction, selectedUserIds }) => {
                   <Icon name="Pause" size={16} className="mr-3 text-warning" />
                   <span>Suspend Users</span>
                 </button>
-                <div className="border-t border-border my-1"></div>
-                <button
-                  onClick={() => handleBulkAction('changeRole')}
-                  className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors duration-200"
-                >
-                  <Icon name="Users" size={16} className="mr-3 text-secondary" />
-                  <span>Change Role</span>
-                </button>
-                <button
-                  onClick={() => handleBulkAction('changeDepartment')}
-                  className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors duration-200"
-                >
-                  <Icon name="Building" size={16} className="mr-3 text-accent" />
-                  <span>Change Department</span>
-                </button>
+                
                 <div className="border-t border-border my-1"></div>
                 <button
                   onClick={() => handleBulkAction('resetPasswords')}
@@ -80,13 +66,6 @@ const BulkActionsBar = ({ selectedCount, onBulkAction, selectedUserIds }) => {
                 >
                   <Icon name="Key" size={16} className="mr-3 text-primary" />
                   <span>Reset Passwords</span>
-                </button>
-                <button
-                  onClick={() => handleBulkAction('sendInvites')}
-                  className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted transition-colors duration-200"
-                >
-                  <Icon name="Mail" size={16} className="mr-3 text-accent" />
-                  <span>Send Invites</span>
                 </button>
                 <div className="border-t border-border my-1"></div>
                 <button

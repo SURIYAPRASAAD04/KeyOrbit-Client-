@@ -14,11 +14,12 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const roles = [
-    { value: 'Administrator', label: 'Administrator', permissions: ['Read', 'Write', 'Admin', 'Audit'] },
-    { value: 'Manager', label: 'Manager', permissions: ['Read', 'Write', 'Manage'] },
-    { value: 'Developer', label: 'Developer', permissions: ['Read', 'Write'] },
-    { value: 'Auditor', label: 'Auditor', permissions: ['Read', 'Audit'] },
-    { value: 'Viewer', label: 'Viewer', permissions: ['Read'] }
+    { value: 'admin', label: 'Administrator', permissions: ['Read', 'Write', 'Admin', 'Audit', 'Manage'] },
+    { value: 'manager', label: 'Manager', permissions: ['Read', 'Write', 'Manage', 'Audit'] },
+    { value: 'developer', label: 'Developer', permissions: ['Read', 'Write', 'Execute'] },
+    { value: 'auditor', label: 'Auditor', permissions: ['Read', 'Audit', 'Export'] },
+    { value: 'viewer', label: 'Viewer', permissions: ['Read'] },
+    { value: 'user', label: 'User', permissions: ['Read'] }
   ];
 
   const departments = [
@@ -47,10 +48,20 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
     e?.preventDefault();
     setIsLoading(true);
     
-    setTimeout(() => {
-      onUpdate({ ...user, ...userData });
+    try {
+      // Call the parent update function
+      await onUpdate({ 
+        ...user, 
+        ...userData,
+        // Ensure proper case for display
+        role: userData.role.charAt(0).toUpperCase() + userData.role.slice(1).toLowerCase(),
+        status: userData.status.charAt(0).toUpperCase() + userData.status.slice(1).toLowerCase()
+      });
+    } catch (error) {
+      console.error('Error updating user:', error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -67,6 +78,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
           <button
             onClick={onClose}
             className="p-2 hover:bg-muted rounded-lg transition-colors duration-200"
+            disabled={isLoading}
           >
             <Icon name="X" size={20} className="text-muted-foreground" />
           </button>
@@ -85,6 +97,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
                 onChange={(e) => handleInputChange('name', e?.target?.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
                 required
+                disabled={isLoading}
               />
             </div>
 
@@ -95,10 +108,13 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
               <input
                 type="email"
                 value={userData?.email}
-                onChange={(e) => handleInputChange('email', e?.target?.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
-                required
+                disabled
+                readOnly
               />
+              <p className="text-xs text-muted-foreground mt-1">
+                Email address cannot be changed
+              </p>
             </div>
 
             <div>
@@ -110,6 +126,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
                 value={userData?.phone}
                 onChange={(e) => handleInputChange('phone', e?.target?.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
+                disabled={isLoading}
               />
             </div>
 
@@ -123,6 +140,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
                   onChange={(e) => handleInputChange('role', e?.target?.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
                   required
+                  disabled={isLoading}
                 >
                   {roles?.map((role) => (
                     <option key={role?.value} value={role?.value}>
@@ -141,6 +159,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
                   onChange={(e) => handleInputChange('status', e?.target?.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
                   required
+                  disabled={isLoading}
                 >
                   {statuses?.map((status) => (
                     <option key={status} value={status}>
@@ -160,6 +179,7 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
                 onChange={(e) => handleInputChange('department', e?.target?.value)}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
                 required
+                disabled={isLoading}
               >
                 {departments?.map((dept) => (
                   <option key={dept} value={dept}>
@@ -195,7 +215,8 @@ const EditUserModal = ({ user, onClose, onUpdate }) => {
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors duration-200"
+            className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
             Cancel
           </button>

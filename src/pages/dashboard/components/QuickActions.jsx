@@ -29,15 +29,15 @@ const QuickActions = () => {
       description: 'Add or modify user access permissions',
       icon: 'Users',
       color: 'primary',
-      onClick: () => navigate('/api-tokens')
+      onClick: () => navigate('/user-management')
     },
     {
-      id: 'view-audit',
-      title: 'View Audit Logs',
-      description: 'Review security events and compliance',
-      icon: 'FileText',
+      id: 'generate-token',
+      title: 'Generate API Token',
+      description: 'Create new API tokens for secure access',
+      icon: 'Key',
       color: 'accent',
-      onClick: () => navigate('/audit-logs')
+      onClick: () => navigate('/api-tokens')
     }
   ];
 
@@ -53,8 +53,8 @@ const QuickActions = () => {
   };
 
   return (
-    <div className="glass-card rounded-lg p-6">
-      <div className="flex items-center space-x-3 mb-6">
+    <div className="glass-card rounded-lg p-6 w-full">
+      <div className="flex items-center space-x-3 mb-6 w-full">
         <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center">
           <Icon name="Zap" size={20} className="text-primary" />
         </div>
@@ -89,20 +89,7 @@ const QuickActions = () => {
           </button>
         ))}
       </div>
-      {/* Additional Actions */}
-      <div className="mt-6 pt-4 border-t border-border">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" iconName="Download">
-            Export Keys
-          </Button>
-          <Button variant="outline" size="sm" iconName="Settings">
-            Policies
-          </Button>
-          <Button variant="outline" size="sm" iconName="Shield">
-            Security
-          </Button>
-        </div>
-      </div>
+      
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://127.0.0.1:8000';
+// const API_BASE_URL = 'https://keyorbit.onrender.com';
+const API_BASE_URL = 'http://localhost:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -461,6 +462,11 @@ export const dashboardAPI = {
   // Get dashboard widgets
   getWidgets: () => api.get('/dashboard/widgets'),
   updateWidgets: (widgets) => api.put('/dashboard/widgets', { widgets }),
+
+  getStats: () => api.get('/dashboard/stats'),
+  getActivity: (days = 7) => api.get(`/dashboard/activity?days=${days}`),
+  getQuickActions: () => api.get('/dashboard/quick-actions'),
+  getAlerts: () => api.get('/dashboard/alerts')
 };
 
 // Protected API calls (using API tokens - for external API access)
@@ -799,21 +805,735 @@ export const healthCheck = {
 // Export default axios instance
 export default api;
 
-// Export all API modules for convenience
+// // Export all API modules for convenience
+// export const API = {
+//   auth: authAPI,
+//   registration: registrationHelper,
+//   google: googleAuthHelper,
+//   tokens: tokenAPI,
+//   user: userAPI,
+//   organization: organizationAPI,
+//   audit: auditAPI,
+//   keys: keyAPI,
+//   policies: policyAPI,
+//   dashboard: dashboardAPI,
+//   protected: protectedAPI,
+//   utils: authUtils,
+//   flow: registrationFlow,
+//   health: healthCheck,
+//   call: apiCall
+// };
+
+// User Management API calls
+export const userManagementAPI = {
+  // Get all users in organization
+  getUsers: () => api.get('/users'),
+  
+  // Get user statistics
+  getUserStats: () => api.get('/users/stats'),
+  
+  // Invite user to organization
+  inviteUser: (userData) => {
+    // Normalize role to lowercase for backend
+    const normalizedData = {
+      ...userData,
+      role: (userData.role || 'user').toLowerCase()
+    };
+    return api.post('/users/invite', normalizedData);
+  },
+  
+  // Get user details
+  getUserDetails: (userId) => api.get(`/users/${userId}`),
+  
+  // Update user information
+  updateUser: (userId, userData) => {
+    // Normalize role if provided
+    if (userData.role) {
+      userData.role = userData.role.toLowerCase();
+    }
+    return api.put(`/users/${userId}`, userData);
+  },
+  
+  // Update user status (activate, deactivate, suspend)
+  updateUserStatus: (userId, status) => api.post(`/users/${userId}/status`, { status }),
+  
+  // Update user role
+  updateUserRole: (userId, role) => {
+    const normalizedRole = role.toLowerCase();
+    return api.post(`/users/${userId}/role`, { role: normalizedRole });
+  },
+  
+  // Delete user (soft delete)
+  deleteUser: (userId) => api.delete(`/users/${userId}`),
+  
+  // Bulk user actions
+  bulkUserActions: (actionData) => {
+    // Normalize role if provided in bulk action
+    if (actionData.role) {
+      actionData.role = actionData.role.toLowerCase();
+    }
+    return api.post('/users/bulk/actions', actionData);
+  },
+  
+  // Get pending invitations
+  getInvitations: () => api.get('/invitations'),
+  
+  // Resend invitation
+  resendInvitation: (invitationId) => api.post(`/invitations/${invitationId}/resend`),
+  
+  // Cancel invitation
+  cancelInvitation: (invitationId) => api.post(`/invitations/${invitationId}/cancel`),
+  
+  // Admin reset password for user
+  adminResetPassword: (userId) => api.post(`/users/${userId}/reset-password`),
+  
+  // Validate invitation token
+  validateInvitation: (token) => api.get(`/auth/validate-invitation/${token}`),
+  
+  // Accept invitation and create account
+  acceptInvitation: (acceptData) => api.post('/auth/accept-invitation', acceptData),
+  
+  // Get user activity logs
+  getUserActivity: (userId, limit = 10) => api.get(`/users/${userId}/activity?limit=${limit}`),
+  
+  // Search users
+  searchUsers: (query, filters = {}) => {
+    const params = new URLSearchParams({ query, ...filters }).toString();
+    return api.get(`/users/search?${params}`);
+  },
+  
+  // Export users (CSV/Excel)
+  exportUsers: (format = 'csv', filters = {}) => {
+    const params = new URLSearchParams({ format, ...filters }).toString();
+    return api.get(`/users/export?${params}`, { responseType: 'blob' });
+  },
+  
+  // Import users from file
+  importUsers: (file, options = {}) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('options', JSON.stringify(options));
+    
+    return api.post('/users/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+  
+  // Get user sessions
+  getUserSessions: (userId) => api.get(`/users/${userId}/sessions`),
+  
+  // Revoke user sessions
+  revokeUserSessions: (userId, sessionId = null) => {
+    if (sessionId) {
+      return api.delete(`/users/${userId}/sessions/${sessionId}`);
+    }
+    return api.delete(`/users/${userId}/sessions`);
+  },
+  
+  // Enable/disable MFA for user (admin)
+  toggleUserMFA: (userId, enable = true) => 
+    api.post(`/users/${userId}/mfa`, { enable }),
+  
+  // Get user API tokens
+  getUserApiTokens: (userId) => api.get(`/users/${userId}/api-tokens`),
+  
+  // Create API token for user (admin)
+  createUserApiToken: (userId, tokenData) => 
+    api.post(`/users/${userId}/api-tokens`, tokenData),
+  
+  // Revoke user API token
+  revokeUserApiToken: (userId, tokenId) => 
+    api.delete(`/users/${userId}/api-tokens/${tokenId}`),
+  
+  // Get user audit logs
+  getUserAuditLogs: (userId, filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    return api.get(`/users/${userId}/audit-logs?${params}`);
+  },
+  
+  // Get user login history
+  getUserLoginHistory: (userId, limit = 50) => 
+    api.get(`/users/${userId}/login-history?limit=${limit}`),
+  
+  // Update user permissions (admin only)
+  updateUserPermissions: (userId, permissions) => 
+    api.put(`/users/${userId}/permissions`, { permissions }),
+  
+  // Assign user to groups/teams
+  assignUserToGroups: (userId, groupIds) => 
+    api.post(`/users/${userId}/groups`, { groupIds }),
+  
+  // Remove user from groups
+  removeUserFromGroups: (userId, groupIds) => 
+    api.delete(`/users/${userId}/groups`, { data: { groupIds } }),
+  
+  // Get user groups
+  getUserGroups: (userId) => api.get(`/users/${userId}/groups`),
+  
+  // Set user quota/limits
+  setUserQuota: (userId, quotaData) => 
+    api.post(`/users/${userId}/quota`, quotaData),
+  
+  // Get user quota
+  getUserQuota: (userId) => api.get(`/users/${userId}/quota`),
+  
+  // Send custom notification to user
+  sendUserNotification: (userId, notification) => 
+    api.post(`/users/${userId}/notify`, notification),
+  
+  // Get user preferences
+  getUserPreferences: (userId) => api.get(`/users/${userId}/preferences`),
+  
+  // Update user preferences
+  updateUserPreferences: (userId, preferences) => 
+    api.put(`/users/${userId}/preferences`, preferences),
+  
+  // Get user devices
+  getUserDevices: (userId) => api.get(`/users/${userId}/devices`),
+  
+  // Revoke user device
+  revokeUserDevice: (userId, deviceId) => 
+    api.delete(`/users/${userId}/devices/${deviceId}`),
+  
+  // Check if user exists by email
+  checkUserExists: (email) => api.get(`/users/check/${encodeURIComponent(email)}`),
+  
+  // Merge duplicate users
+  mergeUsers: (primaryUserId, duplicateUserId) => 
+    api.post('/users/merge', { primaryUserId, duplicateUserId }),
+  
+  // Restore deleted user
+  restoreUser: (userId) => api.post(`/users/${userId}/restore`),
+  
+  // Permanently delete user
+  permanentlyDeleteUser: (userId) => api.delete(`/users/${userId}/permanent`),
+  
+  // Get user count by status
+  getUserCountByStatus: () => api.get('/users/count/status'),
+  
+  // Get user count by role
+  getUserCountByRole: () => api.get('/users/count/role'),
+  
+  // Get user count by department
+  getUserCountByDepartment: () => api.get('/users/count/department'),
+  
+  // Get user registration timeline
+  getUserRegistrationTimeline: (period = '30d') => 
+    api.get(`/users/timeline/registration?period=${period}`),
+  
+  // Get user activity timeline
+  getUserActivityTimeline: (userId, period = '30d') => 
+    api.get(`/users/${userId}/timeline/activity?period=${period}`),
+  
+  // Get user login locations
+  getUserLoginLocations: (userId) => api.get(`/users/${userId}/locations`),
+  
+  // Set user access schedule
+  setUserAccessSchedule: (userId, schedule) => 
+    api.post(`/users/${userId}/schedule`, schedule),
+  
+  // Get user access schedule
+  getUserAccessSchedule: (userId) => api.get(`/users/${userId}/schedule`),
+  
+  // Validate user access (check if user can access resource)
+  validateUserAccess: (userId, resource, action) => 
+    api.post('/users/validate-access', { userId, resource, action }),
+  
+  // Get user risk score
+  getUserRiskScore: (userId) => api.get(`/users/${userId}/risk-score`),
+  
+  // Update user risk score
+  updateUserRiskScore: (userId, riskScore, reason) => 
+    api.post(`/users/${userId}/risk-score`, { riskScore, reason }),
+  
+  // Get user compliance status
+  getUserComplianceStatus: (userId) => api.get(`/users/${userId}/compliance`),
+  
+  // Mark user compliant
+  markUserCompliant: (userId, complianceData) => 
+    api.post(`/users/${userId}/compliance`, complianceData),
+  
+  // Get user training status
+  getUserTrainingStatus: (userId) => api.get(`/users/${userId}/training`),
+  
+  // Update user training status
+  updateUserTrainingStatus: (userId, trainingData) => 
+    api.post(`/users/${userId}/training`, trainingData),
+  
+  // Request user review (for managers)
+  requestUserReview: (userId, reviewData) => 
+    api.post(`/users/${userId}/review`, reviewData),
+  
+  // Submit user review
+  submitUserReview: (userId, reviewId, reviewData) => 
+    api.post(`/users/${userId}/reviews/${reviewId}`, reviewData),
+  
+  // Get user reviews
+  getUserReviews: (userId) => api.get(`/users/${userId}/reviews`),
+  
+  // Archive user
+  archiveUser: (userId, archiveData) => 
+    api.post(`/users/${userId}/archive`, archiveData),
+  
+  // Unarchive user
+  unarchiveUser: (userId) => api.post(`/users/${userId}/unarchive`),
+  
+  // Get archived users
+  getArchivedUsers: () => api.get('/users/archived'),
+  
+  // Get user hierarchy (manager > team members)
+  getUserHierarchy: (userId) => api.get(`/users/${userId}/hierarchy`),
+  
+  // Assign manager to user
+  assignManager: (userId, managerId) => 
+    api.post(`/users/${userId}/manager`, { managerId }),
+  
+  // Remove manager from user
+  removeManager: (userId) => api.delete(`/users/${userId}/manager`),
+  
+  // Get user's team members (if manager)
+  getUserTeam: (userId) => api.get(`/users/${userId}/team`),
+  
+  // Transfer user to another organization (super admin)
+  transferUser: (userId, targetOrgId) => 
+    api.post(`/users/${userId}/transfer`, { targetOrgId }),
+  
+  // Clone user permissions/roles
+  cloneUserSettings: (sourceUserId, targetUserId, settings = {}) => 
+    api.post('/users/clone-settings', { sourceUserId, targetUserId, settings }),
+  
+  // Generate user report
+  generateUserReport: (userId, reportType, options = {}) => 
+    api.post(`/users/${userId}/reports/${reportType}`, options),
+  
+  // Get user report history
+  getUserReportHistory: (userId) => api.get(`/users/${userId}/reports`),
+  
+  // Download user report
+  downloadUserReport: (userId, reportId) => 
+    api.get(`/users/${userId}/reports/${reportId}/download`, { responseType: 'blob' }),
+  
+  // Send welcome email to user (admin)
+  sendWelcomeEmail: (userId, template = 'default') => 
+    api.post(`/users/${userId}/welcome-email`, { template }),
+  
+  // Send onboarding checklist
+  sendOnboardingChecklist: (userId) => api.post(`/users/${userId}/onboarding`),
+  
+  // Mark onboarding complete
+  markOnboardingComplete: (userId, checklist) => 
+    api.post(`/users/${userId}/onboarding/complete`, { checklist }),
+  
+  // Get user onboarding status
+  getUserOnboardingStatus: (userId) => api.get(`/users/${userId}/onboarding`),
+  
+  // Set user tags
+  setUserTags: (userId, tags) => api.post(`/users/${userId}/tags`, { tags }),
+  
+  // Get user tags
+  getUserTags: (userId) => api.get(`/users/${userId}/tags`),
+  
+  // Remove user tag
+  removeUserTag: (userId, tag) => api.delete(`/users/${userId}/tags/${encodeURIComponent(tag)}`),
+  
+  // Search users by tags
+  searchUsersByTags: (tags, operator = 'AND') => 
+    api.get(`/users/tags/search?tags=${tags.join(',')}&operator=${operator}`),
+  
+  // Bulk update user fields
+  bulkUpdateUsers: (userIds, updates) => 
+    api.put('/users/bulk/update', { userIds, updates }),
+  
+  // Bulk delete users
+  bulkDeleteUsers: (userIds, permanent = false) => 
+    api.post('/users/bulk/delete', { userIds, permanent }),
+  
+  // Bulk export users
+  bulkExportUsers: (userIds, format = 'csv') => {
+    const params = new URLSearchParams({ 
+      userIds: userIds.join(','), 
+      format 
+    }).toString();
+    return api.get(`/users/bulk/export?${params}`, { responseType: 'blob' });
+  },
+  
+  // Bulk invite users
+  bulkInviteUsers: (invites, options = {}) => 
+    api.post('/users/bulk/invite', { invites, options }),
+  
+  // Get bulk operation status
+  getBulkOperationStatus: (operationId) => 
+    api.get(`/users/bulk/operations/${operationId}`),
+  
+  // Cancel bulk operation
+  cancelBulkOperation: (operationId) => 
+    api.delete(`/users/bulk/operations/${operationId}`),
+
+  bulkResetPasswords: (data) => api.post('/users/bulk/reset-passwords', data),
+
+  // Bulk invite endpoint  
+  bulkInviteUsers: (data) => api.post('/users/bulk/invite', data),
+  
+  // Get user audit summary
+  getUserAuditSummary: (userId) => api.get(`/users/${userId}/audit-summary`),
+  
+  // Get user security events
+  getUserSecurityEvents: (userId, limit = 50) => 
+    api.get(`/users/${userId}/security-events?limit=${limit}`),
+  
+  // Acknowledge security event
+  acknowledgeSecurityEvent: (userId, eventId) => 
+    api.post(`/users/${userId}/security-events/${eventId}/acknowledge`),
+  
+  // Get user anomaly detection
+  getUserAnomalies: (userId) => api.get(`/users/${userId}/anomalies`),
+  
+  // Mark anomaly as resolved
+  markAnomalyResolved: (userId, anomalyId, resolution) => 
+    api.post(`/users/${userId}/anomalies/${anomalyId}/resolve`, { resolution }),
+  
+  // Get user access patterns
+  getUserAccessPatterns: (userId) => api.get(`/users/${userId}/access-patterns`),
+  
+  // Set user access pattern alert
+  setUserAccessPatternAlert: (userId, patternId, alertConfig) => 
+    api.post(`/users/${userId}/access-patterns/${patternId}/alert`, alertConfig)
+};
+
+// User Management Helper Functions
+export const userManagementHelpers = {
+  // Normalize role for display
+  normalizeRole: (role) => {
+    const roleMap = {
+      'admin': 'Administrator',
+      'administrator': 'Administrator',
+      'manager': 'Manager',
+      'developer': 'Developer',
+      'auditor': 'Auditor',
+      'viewer': 'Viewer',
+      'user': 'User'
+    };
+    return roleMap[role?.toLowerCase()] || role;
+  },
+  
+  // Get role color
+  getRoleColor: (role) => {
+    const colorMap = {
+      'admin': 'primary',
+      'administrator': 'primary',
+      'manager': 'secondary',
+      'developer': 'accent',
+      'auditor': 'warning',
+      'viewer': 'muted',
+      'user': 'default'
+    };
+    return colorMap[role?.toLowerCase()] || 'default';
+  },
+  
+  // Get status color
+  getStatusColor: (status) => {
+    const colorMap = {
+      'active': 'success',
+      'inactive': 'muted',
+      'suspended': 'error',
+      'pending': 'warning',
+      'deleted': 'error'
+    };
+    return colorMap[status?.toLowerCase()] || 'default';
+  },
+  
+  // Format user data for display
+  formatUserForDisplay: (user) => {
+    return {
+      ...user,
+      displayName: `${user.firstName} ${user.lastName}`.trim() || user.email,
+      displayRole: userManagementHelpers.normalizeRole(user.role),
+      roleColor: userManagementHelpers.getRoleColor(user.role),
+      statusColor: userManagementHelpers.getStatusColor(user.status),
+      initials: userManagementHelpers.getInitials(user.firstName, user.lastName, user.email)
+    };
+  },
+  
+  // Get user initials
+  getInitials: (firstName, lastName, email) => {
+    if (firstName && lastName) {
+      return `${firstName[0]}${lastName[0]}`.toUpperCase();
+    } else if (firstName) {
+      return firstName.substring(0, 2).toUpperCase();
+    } else if (email) {
+      return email.substring(0, 2).toUpperCase();
+    }
+    return '??';
+  },
+  
+  // Check if user can perform action
+  canPerformAction: (currentUser, action, targetUser = null) => {
+    const currentRole = currentUser?.role?.toLowerCase();
+    const targetRole = targetUser?.role?.toLowerCase();
+    
+    // Role hierarchy
+    const roleHierarchy = {
+      'admin': 5,
+      'administrator': 5,
+      'manager': 4,
+      'developer': 3,
+      'auditor': 3,
+      'viewer': 2,
+      'user': 1
+    };
+    
+    const currentLevel = roleHierarchy[currentRole] || 0;
+    const targetLevel = targetRole ? roleHierarchy[targetRole] : 0;
+    
+    switch(action) {
+      case 'invite_user':
+        return ['admin', 'administrator', 'manager'].includes(currentRole);
+      
+      case 'edit_user':
+        if (!targetUser) return false;
+        // Can't edit yourself if admin is trying to change their own role
+        if (currentUser.userId === targetUser.id && action === 'edit_user_role') {
+          return currentRole === 'admin';
+        }
+        return currentLevel > targetLevel || currentRole === 'admin';
+      
+      case 'delete_user':
+        if (!targetUser) return false;
+        // Can't delete yourself
+        if (currentUser.userId === targetUser.id) return false;
+        return currentLevel > targetLevel || currentRole === 'admin';
+      
+      case 'reset_password':
+        return ['admin', 'administrator', 'manager'].includes(currentRole);
+      
+      case 'view_audit_logs':
+        return ['admin', 'administrator', 'manager', 'auditor'].includes(currentRole);
+      
+      case 'manage_keys':
+        return ['admin', 'administrator', 'manager', 'developer'].includes(currentRole);
+      
+      case 'manage_users':
+        return ['admin', 'administrator', 'manager'].includes(currentRole);
+      
+      default:
+        return false;
+    }
+  },
+  
+  // Prepare user data for API
+  prepareUserData: (userData) => {
+    const data = { ...userData };
+    
+    // Normalize role
+    if (data.role) {
+      data.role = data.role.toLowerCase();
+    }
+    
+    // Clean up empty strings
+    Object.keys(data).forEach(key => {
+      if (data[key] === '') {
+        delete data[key];
+      }
+    });
+    
+    return data;
+  },
+  
+  // Validate user data
+  validateUserData: (userData, isNew = false) => {
+    const errors = {};
+    
+    if (isNew) {
+      if (!userData.email) {
+        errors.email = 'Email is required';
+      } else if (!/\S+@\S+\.\S+/.test(userData.email)) {
+        errors.email = 'Invalid email format';
+      }
+    }
+    
+    if (userData.role && !['admin', 'administrator', 'manager', 'developer', 'auditor', 'viewer', 'user'].includes(userData.role.toLowerCase())) {
+      errors.role = 'Invalid role';
+    }
+    
+    if (userData.phone && !/^[\d\s\-\+\(\)]{10,15}$/.test(userData.phone.replace(/\D/g, ''))) {
+      errors.phone = 'Invalid phone number';
+    }
+    
+    return errors;
+  },
+  
+  // Format bulk action data
+  formatBulkActionData: (action, userIds, additionalData = {}) => {
+    const data = {
+      action,
+      userIds
+    };
+    
+    switch(action) {
+      case 'changeRole':
+        if (additionalData.role) {
+          data.role = additionalData.role.toLowerCase();
+        }
+        break;
+      
+      case 'changeDepartment':
+        if (additionalData.department) {
+          data.department = additionalData.department;
+        }
+        break;
+      
+      case 'activate':
+      case 'deactivate':
+      case 'suspend':
+      case 'delete':
+        // No additional data needed
+        break;
+      
+      default:
+        Object.assign(data, additionalData);
+    }
+    
+    return data;
+  }
+};
+
+// Key Management API calls
+export const PQCkeyAPI = {
+  // Get all keys
+  getKeys: (params = {}) => {
+    const queryParams = new URLSearchParams(params).toString();
+    return api.get(`/keys${queryParams ? `?${queryParams}` : ''}`);
+  },
+  
+  // Generate ML-KEM key
+  generateMLKEMKey: (keyData) => api.post('/keys/generate/ml-kem', keyData),
+  
+  // Generate ML-DSA key
+  generateMLDSAKey: (keyData) => api.post('/keys/generate/ml-dsa', keyData),
+  
+  // Generate Hybrid key
+  generateHybridKey: (keyData) => api.post('/keys/generate/hybrid', keyData),
+  
+  // Get single key details
+  getKey: (keyId) => api.get(`/keys/${keyId}`),
+  
+  // Revoke key
+  //revokeKey: (keyId, reason = '') => api.post(`/keys/${keyId}/revoke`, { reason }),
+  
+  // Delete key
+  //deleteKey: (keyId) => api.delete(`/keys/${keyId}/delete`),
+  
+  // Rotate key
+  rotateKey: (keyId) => api.post(`/keys/${keyId}/rotate`),
+  
+  // Get key statistics
+  getKeyStats: () => api.get('/keys/stats'),
+  
+  // Get supported algorithms
+  getAlgorithms: () => api.get('/keys/algorithms'),
+  
+  // Download public key
+  downloadPublicKey: (keyId) => api.get(`/keys/${keyId}/download`, { responseType: 'blob' }),
+  
+  // Bulk operations
+  bulkRevokeKeys: (keyIds, reason = '') => api.post('/keys/bulk/revoke', { keyIds, reason }),
+  bulkDeleteKeys: (keyIds) => api.delete('/keys/bulk/delete', { data: { keyIds } }),
+  
+  // Cryptographic operations
+  encapsulate: (keyId, data) => api.post(`/keys/${keyId}/encapsulate`, data),
+  decapsulate: (keyId, ciphertext) => api.post(`/keys/${keyId}/decapsulate`, { ciphertext }),
+  sign: (keyId, message) => api.post(`/keys/${keyId}/sign`, { message }),
+  verify: (keyId, message, signature) => api.post(`/keys/${keyId}/verify`, { message, signature }),
+  
+  // Key usage history
+  getKeyUsage: (keyId) => api.get(`/keys/${keyId}/usage`),
+
+  
+    revokeKey: (keyId, reason = '') => {
+    return api({
+      method: 'post',
+      url: `/keys/${keyId}/revoke`,
+      data: { reason },
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  },
+  
+  // Delete key - this works because DELETE with body needs special handling
+  deleteKey: (keyId) => api.delete(`/keys/${keyId}/delete`),
+  
+  // Rotate key - also needs proper headers
+  rotateKey: (keyId) => {
+    return api({
+      method: 'post',
+      url: `/keys/${keyId}/rotate`,
+      data: {},
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  },
+};
+
+export const auditAPInew = {
+  // Get logs with filters
+  getLogs: (params = {}) => {
+    const queryParams = new URLSearchParams(params).toString();
+    return api.get(`/audit/logs?${queryParams}`);
+  },
+  
+  // Get log details
+  getLogDetails: (logId) => api.get(`/audit/logs/${logId}`),
+  
+  // Get statistics
+  getStats: (days = 30) => api.get(`/audit/stats?days=${days}`),
+  
+  // Export logs
+  exportLogs: (format = 'json', filters = {}) => {
+    const params = new URLSearchParams({ format, ...filters }).toString();
+    return api.get(`/audit/export?${params}`, { responseType: 'blob' });
+  },
+  
+  // Get user logs
+  getUserLogs: (userId, params = {}) => {
+    const queryParams = new URLSearchParams(params).toString();
+    return api.get(`/audit/user/${userId}?${queryParams}`);
+  },
+  
+  // Get recent events
+  getRecentEvents: (limit = 20) => api.get(`/audit/recent?limit=${limit}`),
+  
+  // Search logs
+  searchLogs: (query, params = {}) => {
+    const queryParams = new URLSearchParams({ q: query, ...params }).toString();
+    return api.get(`/audit/search?${queryParams}`);
+  }
+};
+
+
+// Update the main API export
 export const API = {
   auth: authAPI,
+  pqcKeys: PQCkeyAPI,
   registration: registrationHelper,
   google: googleAuthHelper,
   tokens: tokenAPI,
   user: userAPI,
   organization: organizationAPI,
-  audit: auditAPI,
+  audit: auditAPInew,
+  auditLegacy: auditAPI,  
   keys: keyAPI,
   policies: policyAPI,
   dashboard: dashboardAPI,
   protected: protectedAPI,
+  users: userManagementAPI,  // Add user management API
+  userHelpers: userManagementHelpers,  // Add user helpers
   utils: authUtils,
   flow: registrationFlow,
   health: healthCheck,
   call: apiCall
 };
+

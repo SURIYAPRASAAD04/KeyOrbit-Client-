@@ -12,46 +12,6 @@ const Footer = ({ onGetStarted, onContactSales }) => {
         { label: 'Integrations', href: '#' },
         { label: 'Security', href: '#' }
       ]
-    },
-    {
-      title: 'Solutions',
-      links: [
-        { label: 'Enterprise', href: '#' },
-        { label: 'Financial Services', href: '#' },
-        { label: 'Healthcare', href: '#' },
-        { label: 'Government', href: '#' },
-        { label: 'Cloud Providers', href: '#' }
-      ]
-    },
-    {
-      title: 'Resources',
-      links: [
-        { label: 'Documentation', href: '#resources' },
-        { label: 'Whitepapers', href: '#resources' },
-        { label: 'Webinars', href: '#resources' },
-        { label: 'Blog', href: '#' },
-        { label: 'Case Studies', href: '#' }
-      ]
-    },
-    {
-      title: 'Company',
-      links: [
-        { label: 'About Us', href: '#' },
-        { label: 'Careers', href: '#' },
-        { label: 'News', href: '#' },
-        { label: 'Partners', href: '#' },
-        { label: 'Contact', href: '#' }
-      ]
-    },
-    {
-      title: 'Support',
-      links: [
-        { label: 'Help Center', href: '#' },
-        { label: 'System Status', href: '#' },
-        { label: 'Professional Services', href: '#' },
-        { label: 'Training', href: '#' },
-        { label: 'Community', href: '#' }
-      ]
     }
   ];
 
@@ -169,20 +129,7 @@ const Footer = ({ onGetStarted, onContactSales }) => {
             </div>
 
             {/* Compliance Badges */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <Icon name="Shield" size={16} className="text-success" />
-                <span>SOC 2 Compliant</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <Icon name="Lock" size={16} className="text-primary" />
-                <span>FIPS 140-2</span>
-              </div>
-              <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-                <Icon name="Globe" size={16} className="text-secondary" />
-                <span>GDPR Ready</span>
-              </div>
-            </div>
+          
           </div>
         </div>
       </div>

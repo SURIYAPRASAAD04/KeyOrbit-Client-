@@ -21,22 +21,10 @@ const Sidebar = ({ isCollapsed = false, onToggle }) => {
       description: 'Manage cryptographic keys'
     },
     {
-      label: 'Audit Logs',
-      path: '/audit-logs',
-      icon: 'FileText',
-      description: 'Security and compliance logs'
-    },
-    {
       label: 'API Tokens',
       path: '/api-tokens',
       icon: 'Code',
       description: 'Programmatic access tokens'
-    },
-    {
-      label: 'Policy Management',
-      path: '/policy-management',
-      icon: 'Shield',
-      description: 'Manage security policies and compliance'
     },
     {
       label: 'User Management',
@@ -128,49 +116,9 @@ const Sidebar = ({ isCollapsed = false, onToggle }) => {
             ))}
           </nav>
 
-          {/* Collapse Toggle (Desktop) */}
-          <div className={`hidden lg:flex items-center px-4 py-4 border-t border-border ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-            {!isCollapsed && (
-              <div className="text-xs text-muted-foreground">
-                <div className="font-medium">System Status</div>
-                <div className="flex items-center mt-1">
-                  <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-                  All systems operational
-                </div>
-              </div>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onToggle}
-              className="flex-shrink-0"
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <Icon 
-                name={isCollapsed ? 'ChevronRight' : 'ChevronLeft'} 
-                size={16} 
-              />
-            </Button>
-          </div>
+          
 
-          {/* Mobile Close Button */}
-          <div className="lg:hidden flex items-center justify-between px-4 py-4 border-t border-border">
-            <div className="text-xs text-muted-foreground">
-              <div className="font-medium">System Status</div>
-              <div className="flex items-center mt-1">
-                <div className="w-2 h-2 bg-success rounded-full mr-2"></div>
-                All systems operational
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsMobileOpen(false)}
-              aria-label="Close menu"
-            >
-              <Icon name="X" size={16} />
-            </Button>
-          </div>
+          
         </div>
       </aside>
       {/* Mobile Menu Button */}

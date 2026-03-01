@@ -13,30 +13,7 @@ const Header = ({ onMenuToggle, isSidebarCollapsed = false }) => {
   const { user, logout } = useAuth();
 
   const notifications = [
-    {
-      id: 1,
-      type: 'warning',
-      title: 'Key Expiration Alert',
-      message: 'RSA-2048 key expires in 7 days',
-      time: '2 hours ago',
-      unread: true
-    },
-    {
-      id: 2,
-      type: 'success',
-      title: 'Key Generated',
-      message: 'New AES-256 key created successfully',
-      time: '4 hours ago',
-      unread: true
-    },
-    {
-      id: 3,
-      type: 'error',
-      title: 'Access Denied',
-      message: 'Failed authentication attempt detected',
-      time: '6 hours ago',
-      unread: false
-    }
+    
   ];
 
   const unreadCount = notifications?.filter(n => n?.unread)?.length;
@@ -54,7 +31,7 @@ const Header = ({ onMenuToggle, isSidebarCollapsed = false }) => {
       '/login': 'Login',
       '/register': 'Register'
     };
-    return pathMap?.[location?.pathname] || 'KeyOrbit KMS';
+    return pathMap?.[location?.pathname] || 'KeyOrbit';
   };
 
   const handleLogout = async () => {
@@ -122,21 +99,7 @@ const Header = ({ onMenuToggle, isSidebarCollapsed = false }) => {
         <div className="flex items-center space-x-4">
           {/* Notification Center */}
           <div className="relative">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
-              className="relative"
-              aria-label="Notifications"
-            >
-              <Icon name="Bell" size={20} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-accent text-accent-foreground text-xs rounded-full flex items-center justify-center font-medium">
-                  {unreadCount}
-                </span>
-              )}
-            </Button>
-
+            
             {/* Notification Dropdown */}
             {isNotificationOpen && (
               <div className="absolute right-0 mt-2 w-80 glass-card rounded-lg shadow-orbital-lg border border-border z-200">
@@ -176,11 +139,7 @@ const Header = ({ onMenuToggle, isSidebarCollapsed = false }) => {
                     </div>
                   ))}
                 </div>
-                <div className="p-4 border-t border-border">
-                  <Button variant="ghost" size="sm" className="w-full">
-                    View All Notifications
-                  </Button>
-                </div>
+               
               </div>
             )}
           </div>
@@ -208,35 +167,13 @@ const Header = ({ onMenuToggle, isSidebarCollapsed = false }) => {
               <div className="absolute right-0 mt-2 w-56 glass-card rounded-lg shadow-orbital-lg border border-border z-200">
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                      {getUserInitials()}
-                    </div>
+                    
                     <div>
                       <p className="text-sm font-medium text-foreground">{getUserDisplayName()}</p>
                       <p className="text-xs text-muted-foreground">{user?.email || 'No email'}</p>
                       <p className="text-xs text-muted-foreground capitalize">{user?.role || 'User'}</p>
                     </div>
                   </div>
-                </div>
-                <div className="py-2">
-                  <a href="/profile-settings" className="block">
-                    <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted/30 transition-colors duration-150">
-                      <Icon name="User" size={16} className="mr-3" />
-                      Profile Settings
-                    </button>
-                  </a>
-                  <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted/30 transition-colors duration-150">
-                    <Icon name="Settings" size={16} className="mr-3" />
-                    Preferences
-                  </button>
-                  <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted/30 transition-colors duration-150">
-                    <Icon name="Moon" size={16} className="mr-3" />
-                    Dark Mode
-                  </button>
-                  <button className="flex items-center w-full px-4 py-2 text-sm text-foreground hover:bg-muted/30 transition-colors duration-150">
-                    <Icon name="HelpCircle" size={16} className="mr-3" />
-                    Help & Support
-                  </button>
                 </div>
                 <div className="border-t border-border py-2">
                   <button 

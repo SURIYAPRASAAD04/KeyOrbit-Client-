@@ -44,25 +44,7 @@ const HeroSection = ({ onGetStarted, onRequestDemo }) => {
             </button>
           </div>
 
-          {/* Security Badges */}
-          <div className="flex flex-wrap justify-center gap-6 mb-16">
-            <div className="flex items-center space-x-2 glass-card px-4 py-2 rounded-full">
-              <Icon name="Shield" size={16} className="text-success" />
-              <span className="text-sm font-medium text-foreground">SOC 2 Compliant</span>
-            </div>
-            <div className="flex items-center space-x-2 glass-card px-4 py-2 rounded-full">
-              <Icon name="Lock" size={16} className="text-primary" />
-              <span className="text-sm font-medium text-foreground">FIPS 140-2 Level 3</span>
-            </div>
-            <div className="flex items-center space-x-2 glass-card px-4 py-2 rounded-full">
-              <Icon name="CheckCircle" size={16} className="text-accent" />
-              <span className="text-sm font-medium text-foreground">Common Criteria</span>
-            </div>
-            <div className="flex items-center space-x-2 glass-card px-4 py-2 rounded-full">
-              <Icon name="Globe" size={16} className="text-secondary" />
-              <span className="text-sm font-medium text-foreground">GDPR Ready</span>
-            </div>
-          </div>
+
 
           {/* Key Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">

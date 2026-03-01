@@ -13,6 +13,8 @@ const InviteUserModal = ({ onClose, onInvite }) => {
     phone: '',
     message: ''
   });
+  const [statusMessage, setStatusMessage] = useState(null);
+  const [statusType, setStatusType] = useState(null); // 'success', 'error', 'info'
 
   const steps = [
     { id: 1, title: 'Basic Information', icon: 'User' },
@@ -21,11 +23,12 @@ const InviteUserModal = ({ onClose, onInvite }) => {
   ];
 
   const roles = [
-    { value: 'Administrator', label: 'Administrator', permissions: ['Read', 'Write', 'Admin', 'Audit'] },
-    { value: 'Manager', label: 'Manager', permissions: ['Read', 'Write', 'Manage'] },
-    { value: 'Developer', label: 'Developer', permissions: ['Read', 'Write'] },
-    { value: 'Auditor', label: 'Auditor', permissions: ['Read', 'Audit'] },
-    { value: 'Viewer', label: 'Viewer', permissions: ['Read'] }
+    { value: 'admin', label: 'Administrator', permissions: ['Read', 'Write', 'Admin', 'Audit'] },
+    { value: 'manager', label: 'Manager', permissions: ['Read', 'Write', 'Manage'] },
+    { value: 'developer', label: 'Developer', permissions: ['Read', 'Write'] },
+    { value: 'auditor', label: 'Auditor', permissions: ['Read', 'Audit'] },
+    { value: 'viewer', label: 'Viewer', permissions: ['Read'] },
+    { value: 'user', label: 'User', permissions: ['Read'] }
   ];
 
   const departments = [
@@ -44,6 +47,12 @@ const InviteUserModal = ({ onClose, onInvite }) => {
         permissions: selectedRole?.permissions || []
       }));
     }
+    
+    // Clear any status messages when user starts typing
+    if (statusMessage) {
+      setStatusMessage(null);
+      setStatusType(null);
+    }
   };
 
   const handleNext = () => {
@@ -60,12 +69,36 @@ const InviteUserModal = ({ onClose, onInvite }) => {
 
   const handleSubmit = async () => {
     setIsLoading(true);
+    setStatusMessage(null);
+    setStatusType(null);
     
-    // Simulate API call with orbital loading animation
-    setTimeout(() => {
-      onInvite(userData);
+    try {
+      // Call the parent onInvite function which now returns a promise
+      const result = await onInvite(userData);
+      
+      if (result && result.success === false) {
+        // Show error message
+        setStatusType('error');
+        setStatusMessage(result.error || 'Failed to send invitation');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Show success message
+      setStatusType('success');
+      setStatusMessage('Invitation sent successfully!');
+      
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+      
+    } catch (error) {
+      // Show error message
+      setStatusType('error');
+      setStatusMessage(error.message || 'Failed to send invitation');
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   const isStepValid = () => {
@@ -79,6 +112,63 @@ const InviteUserModal = ({ onClose, onInvite }) => {
       default:
         return false;
     }
+  };
+
+  // Status message component
+  const renderStatusMessage = () => {
+    if (!statusMessage) return null;
+    
+    const getIcon = () => {
+      switch (statusType) {
+        case 'success': return 'CheckCircle';
+        case 'error': return 'AlertCircle';
+        case 'info': return 'Info';
+        default: return 'Info';
+      }
+    };
+    
+    const getBgColor = () => {
+      switch (statusType) {
+        case 'success': return 'bg-success/10 border-success/20';
+        case 'error': return 'bg-error/10 border-error/20';
+        case 'info': return 'bg-primary/10 border-primary/20';
+        default: return 'bg-muted/20 border-border';
+      }
+    };
+    
+    const getTextColor = () => {
+      switch (statusType) {
+        case 'success': return 'text-success';
+        case 'error': return 'text-error';
+        case 'info': return 'text-primary';
+        default: return 'text-foreground';
+      }
+    };
+    
+    return (
+      <div className={`rounded-lg p-4 mb-6 border ${getBgColor()} transition-all duration-300 animate-fadeIn`}>
+        <div className="flex items-start space-x-3">
+          <Icon name={getIcon()} size={20} className={`${getTextColor()} mt-0.5`} />
+          <div className="flex-1">
+            <p className={`text-sm font-medium ${getTextColor()}`}>{statusMessage}</p>
+            {statusType === 'success' && (
+              <p className="text-xs text-muted-foreground mt-1">
+                The user will receive an email with instructions to join. Closing in 2 seconds...
+              </p>
+            )}
+          </div>
+          <button
+            onClick={() => {
+              setStatusMessage(null);
+              setStatusType(null);
+            }}
+            className="p-1 hover:opacity-70 transition-opacity"
+          >
+            <Icon name="X" size={16} className="text-muted-foreground" />
+          </button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -95,10 +185,14 @@ const InviteUserModal = ({ onClose, onInvite }) => {
           <button
             onClick={onClose}
             className="p-2 hover:bg-muted rounded-lg transition-colors duration-200"
+            disabled={isLoading}
           >
             <Icon name="X" size={20} className="text-muted-foreground" />
           </button>
         </div>
+
+        {/* Status Message */}
+        {renderStatusMessage()}
 
         {/* Progress Steps */}
         <div className="px-6 py-4 border-b border-border">
@@ -146,6 +240,7 @@ const InviteUserModal = ({ onClose, onInvite }) => {
                   onChange={(e) => handleInputChange('name', e?.target?.value)}
                   placeholder="Enter full name"
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -159,6 +254,7 @@ const InviteUserModal = ({ onClose, onInvite }) => {
                   onChange={(e) => handleInputChange('email', e?.target?.value)}
                   placeholder="Enter email address"
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -172,6 +268,7 @@ const InviteUserModal = ({ onClose, onInvite }) => {
                   onChange={(e) => handleInputChange('phone', e?.target?.value)}
                   placeholder="Enter phone number"
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -188,6 +285,7 @@ const InviteUserModal = ({ onClose, onInvite }) => {
                   value={userData?.role}
                   onChange={(e) => handleInputChange('role', e?.target?.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
+                  disabled={isLoading}
                 >
                   <option value="">Select a role</option>
                   {roles?.map((role) => (
@@ -206,6 +304,7 @@ const InviteUserModal = ({ onClose, onInvite }) => {
                   value={userData?.department}
                   onChange={(e) => handleInputChange('department', e?.target?.value)}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200"
+                  disabled={isLoading}
                 >
                   <option value="">Select department</option>
                   {departments?.map((dept) => (
@@ -244,6 +343,7 @@ const InviteUserModal = ({ onClose, onInvite }) => {
                   placeholder="Add a personal welcome message..."
                   rows={3}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors duration-200 resize-none"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -269,7 +369,9 @@ const InviteUserModal = ({ onClose, onInvite }) => {
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-sm text-muted-foreground">Role:</dt>
-                    <dd className="text-sm font-medium text-foreground">{userData?.role}</dd>
+                    <dd className="text-sm font-medium text-foreground">
+                      {roles.find(r => r.value === userData?.role)?.label || userData?.role}
+                    </dd>
                   </div>
                   <div className="flex justify-between">
                     <dt className="text-sm text-muted-foreground">Department:</dt>
@@ -297,7 +399,8 @@ const InviteUserModal = ({ onClose, onInvite }) => {
         <div className="flex items-center justify-between p-6 border-t border-border">
           <button
             onClick={currentStep === 1 ? onClose : handlePrevious}
-            className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors duration-200"
+            className="px-4 py-2 text-muted-foreground hover:text-foreground transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isLoading}
           >
             {currentStep === 1 ? 'Cancel' : 'Previous'}
           </button>
@@ -306,7 +409,7 @@ const InviteUserModal = ({ onClose, onInvite }) => {
             {currentStep < 3 ? (
               <button
                 onClick={handleNext}
-                disabled={!isStepValid()}
+                disabled={!isStepValid() || isLoading}
                 className="px-6 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               >
                 Next

@@ -46,13 +46,7 @@ const ProductDemo = ({ onRequestDemo }) => {
                 <div className="text-sm text-muted-foreground">Daily Operations</div>
               </div>
             </div>
-            <div className="bg-muted/20 rounded-lg p-4">
-              <div className="flex items-center space-x-2 mb-2">
-                <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-                <span className="text-sm text-foreground">System Status: Operational</span>
-              </div>
-              <div className="text-xs text-muted-foreground">Last update: 2 seconds ago</div>
-            </div>
+            
           </div>
         );
       case 'keys':

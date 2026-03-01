@@ -20,6 +20,7 @@ import AuthSuccess from './pages/auth/AuthSuccess';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
 import GoogleCallback from './pages/auth/GoogleCallback';
+import AcceptInvitation from './pages/auth/AcceptInvitation';
 
 const Routes = () => {
   return (
@@ -47,14 +48,30 @@ const Routes = () => {
           />
 
           <Route path="/auth/success" element={<AuthSuccess />} />
+          <Route 
+            path="/accept-invitation" 
+            element={
+              <ProtectedRoute requireAuth={false}>
+                <AcceptInvitation />
+              </ProtectedRoute>
+            } 
+          />
           
           {/* Protected Routes - All authenticated users */}
-          <Route 
+          {/* <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute requireAuth={true}>
                 <Dashboard />
               </ProtectedRoute>
+            } 
+          /> */}
+          <Route 
+            path="/dashboard" 
+            element={
+             
+                <Dashboard />
+          
             } 
           />
           <Route 
@@ -112,7 +129,7 @@ const Routes = () => {
           <Route 
             path="/user-management" 
             element={
-              <ProtectedRoute requireAuth={true} requiredRoles={['admin']}>
+              <ProtectedRoute requireAuth={true}>
                 <UserManagement />
               </ProtectedRoute>
             } 

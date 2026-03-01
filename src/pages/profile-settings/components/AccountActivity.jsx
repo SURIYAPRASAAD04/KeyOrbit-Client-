@@ -175,15 +175,6 @@ const AccountActivity = ({ userData }) => {
           </div>
         </div>
 
-        <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
-          <div className="flex items-center space-x-3">
-            <Icon name="AlertTriangle" size={20} className="text-warning" />
-            <div>
-              <p className="text-2xl font-bold text-foreground">2</p>
-              <p className="text-sm text-muted-foreground">Security Alerts</p>
-            </div>
-          </div>
-        </div>
 
         <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
           <div className="flex items-center space-x-3">

@@ -45,8 +45,21 @@ const UserTable = ({
     return name?.split(' ')?.map(n => n?.[0])?.join('')?.toUpperCase();
   };
 
+  const getRoleDisplay = (role) => {
+    const roleMap = {
+      'admin': 'Administrator',
+      'administrator': 'Administrator',
+      'manager': 'Manager',
+      'developer': 'Developer',
+      'auditor': 'Auditor',
+      'viewer': 'Viewer',
+      'user': 'User'
+    };
+    return roleMap[role] || role;
+  };
+
   return (
-    <div className="overflow-hidden">
+    <div className="overflow-visible"> {/* Changed from overflow-hidden to overflow-visible */}
       {/* Desktop Table */}
       <div className="hidden lg:block overflow-x-auto">
         <table className="data-table">
@@ -99,7 +112,7 @@ const UserTable = ({
                 </td>
                 <td>
                   <span className={getRoleBadge(user?.role)}>
-                    {user?.role}
+                    {getRoleDisplay(user?.role)}
                   </span>
                 </td>
                 <td>
@@ -204,7 +217,7 @@ const UserTable = ({
               <div>
                 <p className="text-muted-foreground">Role</p>
                 <span className={getRoleBadge(user?.role)}>
-                  {user?.role}
+                  {getRoleDisplay(user?.role)}
                 </span>
               </div>
               <div>

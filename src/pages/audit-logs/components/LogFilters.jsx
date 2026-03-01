@@ -4,19 +4,33 @@ import Button from '../../../components/ui/Button';
 import Input from '../../../components/ui/Input';
 import Select from '../../../components/ui/Select';
 
-const LogFilters = ({ filters, onFiltersChange, onExport, onClearFilters }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+const LogFilters = ({ 
+  filters, 
+  onFiltersChange, 
+  onApplyFilters,
+  onExport, 
+  onClearFilters,
+  filterOptions,
+  isLoading 
+}) => {
+  const [isExpanded, setIsExpanded] = useState(true);
 
+  // Prepare event type options
   const eventTypeOptions = [
     { value: 'all', label: 'All Events' },
-    { value: 'key_generation', label: 'Key Generation' },
-    { value: 'key_rotation', label: 'Key Rotation' },
-    { value: 'key_revocation', label: 'Key Revocation' },
-    { value: 'user_login', label: 'User Login' },
-    { value: 'user_logout', label: 'User Logout' },
-    { value: 'policy_change', label: 'Policy Change' },
-    { value: 'access_denied', label: 'Access Denied' },
-    { value: 'api_access', label: 'API Access' }
+    ...(filterOptions?.event_types || []).map(type => ({
+      value: type,
+      label: type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    }))
+  ];
+
+  // Prepare user options
+  const userOptions = [
+    { value: 'all', label: 'All Users' },
+    ...(filterOptions?.users || []).map(user => ({
+      value: user.id,
+      label: user.name
+    }))
   ];
 
   const outcomeOptions = [
@@ -26,26 +40,25 @@ const LogFilters = ({ filters, onFiltersChange, onExport, onClearFilters }) => {
     { value: 'warning', label: 'Warning' }
   ];
 
-  const userOptions = [
-    { value: 'all', label: 'All Users' },
-    { value: 'john.doe@company.com', label: 'John Doe' },
-    { value: 'sarah.wilson@company.com', label: 'Sarah Wilson' },
-    { value: 'mike.chen@company.com', label: 'Mike Chen' },
-    { value: 'system', label: 'System' }
+  const exportOptions = [
+    { value: 'csv', label: 'Export as CSV' },
+    { value: 'json', label: 'Export as JSON' }
   ];
 
   const handleFilterChange = (key, value) => {
     onFiltersChange({ ...filters, [key]: value });
   };
 
-  const exportOptions = [
-    { value: 'csv', label: 'Export as CSV' },
-    { value: 'json', label: 'Export as JSON' },
-    { value: 'pdf', label: 'Export as PDF' }
-  ];
+  const handleDateChange = (field, value) => {
+    onFiltersChange({ ...filters, [field]: value });
+  };
+
+  const handleSearch = (e) => {
+    handleFilterChange('search', e.target.value);
+  };
 
   return (
-    <div className="glass-card rounded-lg border border-border p-6 mb-6">
+    <div className="glass-card rounded-lg border border-border p-6">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center space-x-3">
@@ -55,37 +68,41 @@ const LogFilters = ({ filters, onFiltersChange, onExport, onClearFilters }) => {
             {filters?.resultCount || 0} results
           </span>
         </div>
+        
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
-            iconName={isExpanded ? "ChevronUp" : "ChevronDown"}
-            iconPosition="right"
           >
-            {isExpanded ? 'Collapse' : 'Expand'} Filters
+            <Icon name={isExpanded ? "ChevronUp" : "ChevronDown"} size={16} className="mr-2" />
+            {isExpanded ? 'Collapse' : 'Expand'}
           </Button>
+          
           <Button
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            iconName="X"
-            iconPosition="left"
+            disabled={isLoading}
           >
+            <Icon name="X" size={16} className="mr-2" />
             Clear All
           </Button>
         </div>
       </div>
-      {/* Quick Search */}
+
+      {/* Search Bar - Always Visible */}
       <div className="mb-4">
         <Input
           type="search"
-          placeholder="Search across all log fields (supports regex)..."
+          placeholder="Search logs by IP, user agent, or metadata..."
           value={filters?.search || ''}
-          onChange={(e) => handleFilterChange('search', e?.target?.value)}
+          onChange={handleSearch}
           className="w-full"
+          leftIcon="Search"
         />
       </div>
+
       {/* Expandable Filters */}
       {isExpanded && (
         <div className="space-y-4 border-t border-border pt-4">
@@ -95,13 +112,13 @@ const LogFilters = ({ filters, onFiltersChange, onExport, onClearFilters }) => {
               type="datetime-local"
               label="Start Date"
               value={filters?.startDate || ''}
-              onChange={(e) => handleFilterChange('startDate', e?.target?.value)}
+              onChange={(e) => handleDateChange('startDate', e.target.value)}
             />
             <Input
               type="datetime-local"
               label="End Date"
               value={filters?.endDate || ''}
-              onChange={(e) => handleFilterChange('endDate', e?.target?.value)}
+              onChange={(e) => handleDateChange('endDate', e.target.value)}
             />
           </div>
 
@@ -114,13 +131,15 @@ const LogFilters = ({ filters, onFiltersChange, onExport, onClearFilters }) => {
               onChange={(value) => handleFilterChange('eventType', value)}
               searchable
             />
+            
             <Select
               label="User"
               options={userOptions}
-              value={filters?.user || 'all'}
-              onChange={(value) => handleFilterChange('user', value)}
+              value={filters?.userId || 'all'}
+              onChange={(value) => handleFilterChange('userId', value)}
               searchable
             />
+            
             <Select
               label="Outcome"
               options={outcomeOptions}
@@ -129,21 +148,23 @@ const LogFilters = ({ filters, onFiltersChange, onExport, onClearFilters }) => {
             />
           </div>
 
-          {/* IP Address Filter */}
+          {/* IP Address and Resource ID Filters */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
               type="text"
               label="IP Address"
-              placeholder="e.g., 192.168.1.100 or 192.168.1.*"
+              placeholder="e.g., 192.168.1.100"
               value={filters?.ipAddress || ''}
-              onChange={(e) => handleFilterChange('ipAddress', e?.target?.value)}
+              onChange={(e) => handleFilterChange('ipAddress', e.target.value)}
+              leftIcon="Globe"
             />
             <Input
               type="text"
               label="Resource ID"
               placeholder="Filter by specific resource"
               value={filters?.resourceId || ''}
-              onChange={(e) => handleFilterChange('resourceId', e?.target?.value)}
+              onChange={(e) => handleFilterChange('resourceId', e.target.value)}
+              leftIcon="Hash"
             />
           </div>
 
@@ -153,20 +174,23 @@ const LogFilters = ({ filters, onFiltersChange, onExport, onClearFilters }) => {
               <Button
                 variant="default"
                 size="sm"
-                iconName="Search"
-                iconPosition="left"
+                onClick={onApplyFilters}
+                loading={isLoading}
               >
+                <Icon name="Search" size={16} className="mr-2" />
                 Apply Filters
               </Button>
+              
               <Button
                 variant="outline"
                 size="sm"
-                iconName="Save"
-                iconPosition="left"
+                onClick={() => console.log('Save filter set')}
               >
+                <Icon name="Save" size={16} className="mr-2" />
                 Save Filter Set
               </Button>
             </div>
+            
             <Select
               placeholder="Export Options"
               options={exportOptions}

@@ -98,84 +98,8 @@ const SystemStatus = () => {
   const overallConfig = getStatusConfig(overallStatus);
 
   return (
-    <div className="glass-card rounded-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${overallConfig?.bgColor}`}>
-            <Icon name={overallConfig?.icon} size={20} className={overallConfig?.color} />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">System Status</h2>
-            <p className={`text-sm font-medium ${overallConfig?.color}`}>
-              {overallConfig?.label}
-            </p>
-          </div>
-        </div>
-        <div className="text-right">
-          <p className="text-sm text-muted-foreground">Overall Uptime</p>
-          <p className="text-lg font-bold text-foreground">99.94%</p>
-        </div>
-      </div>
-      {/* System Components */}
-      <div className="space-y-3">
-        {systemComponents?.map((component) => {
-          const config = getStatusConfig(component?.status);
-          return (
-            <div
-              key={component?.id}
-              className="flex items-center justify-between p-3 rounded-lg border border-border hover:bg-muted/20 transition-colors duration-150"
-            >
-              <div className="flex items-center space-x-3">
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center ${config?.bgColor}`}>
-                  <Icon name={config?.icon} size={12} className={config?.color} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-foreground">
-                    {component?.name}
-                  </h3>
-                  <p className="text-xs text-muted-foreground">
-                    {component?.description}
-                  </p>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="flex items-center space-x-2 mb-1">
-                  <span className={`text-xs font-medium ${config?.color}`}>
-                    {config?.label}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {component?.uptime}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Checked {formatTime(component?.lastCheck)}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      {/* Status Legend */}
-      <div className="mt-6 pt-4 border-t border-border">
-        <div className="flex flex-wrap gap-4 text-xs">
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-success rounded-full"></div>
-            <span className="text-muted-foreground">Operational</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-warning rounded-full"></div>
-            <span className="text-muted-foreground">Degraded</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-primary rounded-full"></div>
-            <span className="text-muted-foreground">Maintenance</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-error rounded-full"></div>
-            <span className="text-muted-foreground">Outage</span>
-          </div>
-        </div>
-      </div>
+    <div className="">
+      
     </div>
   );
 };
